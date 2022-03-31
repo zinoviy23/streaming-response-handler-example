@@ -1,0 +1,25 @@
+GET {{host}}/stocks/subscribe?symbol=GOLD
+
+> {%
+var updatesCount = 0;
+response.body.onEachLine(
+    (symbolUpdate, unsubscribe) => {
+        updatesCount++;
+        if (updatesCount > 10) {
+            unsubscribe();
+            return;
+        }
+
+        client.test("update " + updatesCount, () => {
+            client.assert(symbolUpdate.symbol.id === "GOLD", "Expected GOLD");
+            client.assert(symbolUpdate.lastPrice > 0, "Price must be > 0");
+            client.log(symbolUpdate.pricePresentation);
+        });
+    },
+    () => {
+        client.test("at least 10 updates", () => {
+            client.assert(updatesCount > 10);
+        });
+    }
+)
+%}
